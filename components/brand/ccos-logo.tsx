@@ -14,7 +14,7 @@ type CcosLogoProps = {
 };
 
 /**
- * Brand mark: `/public/ccos.png` only.
+ * Brand mark: `/public/ccos-logo.png` only.
  * - Sidebar: forced white (invert) in light and dark theme.
  * - Marketing: natural colors (marketing layout is light-only).
  * - Auth: natural in light; white in dark when the app shell is dark.
@@ -34,7 +34,7 @@ export function CcosLogo({
 
   return (
     <Image
-      src="/ccos.png"
+      src="/ccos-logo.png"
       alt="CCOS"
       width={240}
       height={80}

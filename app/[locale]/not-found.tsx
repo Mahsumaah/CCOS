@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CcosLogo } from "@/components/brand/ccos-logo";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/lib/i18n/routing";
+import { resolveLocaleParam } from "@/lib/locale-params";
 
 export const metadata: Metadata = {
   title: "404",
@@ -11,9 +12,9 @@ export const metadata: Metadata = {
 export default async function LocaleNotFound({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params?: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const locale = await resolveLocaleParam(params);
   const loc = locale === "en" ? "en" : "ar";
 
   return (

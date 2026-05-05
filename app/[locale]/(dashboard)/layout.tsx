@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { auth } from "@/lib/auth";
 import { redirect } from "@/lib/i18n/routing";
+import { resolveLocaleParam } from "@/lib/locale-params";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PlanUpgradeProvider } from "@/components/plan/plan-upgrade-provider";
 import { PermissionsProvider } from "@/lib/permissions-context";
@@ -25,9 +26,9 @@ export default async function DashboardGroupLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  params?: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const locale = await resolveLocaleParam(params);
   const session = await auth();
 
   if (!session?.user) {

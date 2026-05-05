@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingNavbar } from "@/components/marketing/navbar";
+import { resolveLocaleParam } from "@/lib/locale-params";
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params?: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
+  const locale = await resolveLocaleParam(params);
   if (locale === "ar") {
     return {
       title: "CCOS - منصة إدارة اجتماعات مجالس الإدارة",

@@ -9,6 +9,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/lib/i18n/routing";
+import { resolveLocaleParam } from "@/lib/locale-params";
 import { cn } from "@/lib/utils";
 
 const cairo = Cairo({
@@ -44,11 +45,11 @@ export default async function LocaleLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  params?: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const locale = await resolveLocaleParam(params);
 
-  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
+  if (!routing.locales.includes(locale)) {
     notFound();
   }
 

@@ -238,7 +238,12 @@ export function DashboardShell({
                 />
               </span>
             ) : (
-              <CcosLogo maxHeight={64} className="block w-auto" priority />
+              <CcosLogo
+                appearance="sidebar"
+                maxHeight={64}
+                className="block w-auto"
+                priority
+              />
             )}
             {user.tenantName ? (
               <span className="text-muted-foreground line-clamp-2 max-w-full px-1 text-center text-xs font-medium leading-tight">

@@ -5,7 +5,6 @@ import { Menu } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CcosLogo } from "@/components/brand/ccos-logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname } from "@/lib/i18n/routing";
 import {
@@ -79,13 +78,12 @@ export function MarketingNavbar() {
           className="flex shrink-0 items-center"
           aria-label={tCommon("appName")}
         >
-          <CcosLogo maxHeight={48} priority />
+          <CcosLogo appearance="marketing" maxHeight={48} priority />
         </Link>
 
         <NavLinks className="mx-auto hidden lg:flex" />
 
         <div className="ms-auto flex items-center gap-2 md:gap-3">
-          <ThemeToggle className="text-foreground shrink-0" />
           <div className="hidden items-center rounded-md border border-border/80 bg-background/60 p-0.5 lg:flex">
             <Button
               type="button"
@@ -149,12 +147,6 @@ export function MarketingNavbar() {
                 <SheetTitle className="text-start">{t("menu")}</SheetTitle>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-6">
-                <div className="flex items-center justify-between gap-3 rounded-md border border-border/80 bg-muted/30 px-3 py-2">
-                  <span className="text-muted-foreground text-sm font-medium">
-                    {t("appearance")}
-                  </span>
-                  <ThemeToggle className="text-foreground shrink-0" />
-                </div>
                 <NavLinks
                   className="gap-4"
                   onNavigate={() => setSheetOpen(false)}

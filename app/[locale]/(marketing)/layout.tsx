@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { MarketingFooter } from "@/components/marketing/footer";
+import { MarketingForceLight } from "@/components/marketing/marketing-force-light";
 import { MarketingNavbar } from "@/components/marketing/navbar";
 import { resolveLocaleParam } from "@/lib/locale-params";
 
@@ -40,10 +41,12 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-svh flex-col scroll-smooth bg-background">
-      <MarketingNavbar />
-      <main className="flex-1 pt-16">{children}</main>
-      <MarketingFooter />
-    </div>
+    <MarketingForceLight>
+      <div className="flex min-h-svh flex-col scroll-smooth bg-background">
+        <MarketingNavbar />
+        <main className="flex-1 pt-16">{children}</main>
+        <MarketingFooter />
+      </div>
+    </MarketingForceLight>
   );
 }

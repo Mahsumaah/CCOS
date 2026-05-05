@@ -37,7 +37,7 @@ export function MarketingFooter() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
             <div className="brightness-0 invert">
-              <CcosLogo maxHeight={48} />
+              <CcosLogo appearance="marketing" maxHeight={48} />
             </div>
             <p className="text-muted-foreground max-w-xs text-sm leading-relaxed">
               {t("tagline")}

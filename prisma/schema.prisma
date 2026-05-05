@@ -1,0 +1,394 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ TENANT ============
+
+model Tenant {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  logo           String?
+  plan           Plan      @default(TRIAL)
+  trialEndsAt    DateTime?
+  /// Default locale for org communications / future emails
+  defaultLocale  String    @default("ar")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  users    BoardUser[]
+  meetings Meeting[]
+}
+
+enum Plan {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+// ============ BOARD USER ============
+
+model BoardUser {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  tenant               Tenant    @relation(fields: [tenantId], references: [id])
+  email                String
+  password             String?
+  passwordSetupToken   String?   @unique
+  passwordSetupExpires DateTime?
+  name                 String
+  role                 BoardRole @default(MEMBER)
+  avatar               String?
+  positionCode         String?
+  position             OrganizationalPosition? @relation(fields: [positionCode], references: [code])
+  isActive             Boolean   @default(true)
+
+  // Fine-grained permissions
+  permCreateMeetings  Boolean @default(false)
+  permEditMeetings    Boolean @default(false)
+  permManageMeetings  Boolean @default(false)
+  permCreateVotes     Boolean @default(false)
+  permCastVotes       Boolean @default(true)
+  permCreateDecisions Boolean @default(false)
+  permEditDecisions   Boolean @default(false)
+  permFinalizeMinutes Boolean @default(false)
+  permManagePositions Boolean @default(false)
+  permManageUsers     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdMeetings     Meeting[]             @relation("CreatedBy")
+  invitations         MeetingInvitation[]
+  delegationsFrom     MeetingDelegation[]   @relation("DelegatedFrom")
+  delegationsTo       MeetingDelegation[]   @relation("DelegatedTo")
+  ballots             VoteBallot[]          @relation("VotedBy")
+  proxiedBallots      VoteBallot[]          @relation("ProxiedBy")
+  createdVotes        Vote[]
+  createdDecisions    Decision[]            @relation("DecisionCreatedBy")
+  approvedDecisions   Decision[]            @relation("DecisionApprovedBy")
+  ownedDecisions      Decision[]            @relation("DecisionOwnedBy")
+  signatures          MinutesSignature[]
+  notifications       BoardNotification[]
+  uploadedAttachments MeetingAttachment[]
+
+  @@unique([tenantId, email])
+}
+
+enum BoardRole {
+  CHAIR
+  VICE_CHAIR_1
+  VICE_CHAIR_2
+  VICE_CHAIR_3
+  VICE_CHAIR_4
+  MEMBER
+  SECRETARY_GENERAL
+  ASSISTANT_SECRETARY_GENERAL
+  SUPERVISOR
+  MINUTES_CLERK
+  TREASURER
+  VIEWER
+}
+
+// ============ MEETING ============
+
+model Meeting {
+  id                     String                @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant                @relation(fields: [tenantId], references: [id])
+  title                  String
+  type                   MeetingType           @default(BOARD)
+  customMeetingType      String?
+  objectives             String?
+  scheduledAt            DateTime
+  durationMin            Int                   @default(60)
+  location               String?
+  schedulingMode         MeetingSchedulingMode @default(SCHEDULED)
+  status                 MeetingStatus         @default(SCHEDULED)
+  startedAt              DateTime?
+  endedAt                DateTime?
+  preMeetingInviteSentAt DateTime?
+  createdById            String
+  createdBy              BoardUser             @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  agenda          MeetingAgendaItem[]
+  attachments     MeetingAttachment[]
+  invitations     MeetingInvitation[]
+  delegations     MeetingDelegation[]
+  votes           Vote[]
+  decisions       Decision[]
+  minutes         Minutes?
+  notifications   BoardNotification[]
+}
+
+enum MeetingType {
+  BOARD
+  EMERGENCY
+  ASSEMBLY
+  EXECUTIVE_COMMITTEE
+  TECHNICAL_COMMITTEE
+  FINANCIAL_COMMITTEE
+  STRATEGIC
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  ARCHIVED
+  CANCELLED
+}
+
+enum MeetingSchedulingMode {
+  INSTANT
+  SCHEDULED
+}
+
+// ============ AGENDA ============
+
+model MeetingAgendaItem {
+  id        String  @id @default(cuid())
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  order     Int
+  titleAr   String
+  titleEn   String?
+  notes     String?
+
+  attachments MeetingAttachment[]
+  votes       Vote[]
+  decisions   Decision[]
+}
+
+// ============ ATTACHMENT ============
+
+model MeetingAttachment {
+  id             String             @id @default(cuid())
+  meetingId      String
+  meeting        Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  agendaItemId   String?
+  agendaItem     MeetingAgendaItem? @relation(fields: [agendaItemId], references: [id])
+  url            String
+  name           String
+  mime           String?
+  size           Int?
+  uploadedById   String
+  uploadedBy     BoardUser          @relation(fields: [uploadedById], references: [id])
+  createdAt      DateTime           @default(now())
+}
+
+// ============ INVITATION ============
+
+model MeetingInvitation {
+  id                      String           @id @default(cuid())
+  meetingId               String
+  meeting                 Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId                  String
+  user                    BoardUser        @relation(fields: [userId], references: [id])
+  role                    BoardRole
+  status                  InvitationStatus @default(PENDING)
+  respondedAt             DateTime?
+  attendanceCheckedInAt DateTime?
+  notes                   String?
+
+  @@unique([meetingId, userId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  TENTATIVE
+}
+
+// ============ DELEGATION ============
+
+model MeetingDelegation {
+  id          String          @id @default(cuid())
+  meetingId   String
+  meeting     Meeting         @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  fromUserId  String
+  fromUser    BoardUser       @relation("DelegatedFrom", fields: [fromUserId], references: [id])
+  toUserId    String
+  toUser      BoardUser       @relation("DelegatedTo", fields: [toUserId], references: [id])
+  scope       DelegationScope @default(ATTENDANCE_ONLY)
+  authDocUrl  String?
+  authDocName String?
+  authDocMime String?
+  authDocSize Int?
+  revokedAt   DateTime?
+  createdAt   DateTime        @default(now())
+}
+
+enum DelegationScope {
+  ATTENDANCE_ONLY
+  ATTENDANCE_AND_VOTING
+}
+
+// ============ VOTE ============
+
+model Vote {
+  id           String             @id @default(cuid())
+  meetingId    String
+  meeting      Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  agendaItemId String?
+  agendaItem   MeetingAgendaItem? @relation(fields: [agendaItemId], references: [id])
+  question     String
+  isOpen       Boolean            @default(true)
+  openedAt     DateTime           @default(now())
+  closedAt     DateTime?
+  createdById  String
+  createdBy    BoardUser          @relation(fields: [createdById], references: [id])
+
+  ballots VoteBallot[]
+}
+
+model VoteBallot {
+  id        String     @id @default(cuid())
+  voteId    String
+  vote      Vote       @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  userId    String
+  user      BoardUser  @relation("VotedBy", fields: [userId], references: [id])
+  castById  String?
+  castBy    BoardUser? @relation("ProxiedBy", fields: [castById], references: [id])
+  choice    VoteChoice
+  createdAt DateTime   @default(now())
+
+  @@unique([voteId, userId])
+}
+
+enum VoteChoice {
+  APPROVE
+  REJECT
+  ABSTAIN
+}
+
+// ============ DECISION ============
+
+model Decision {
+  id           String             @id @default(cuid())
+  meetingId    String
+  meeting      Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  agendaItemId String?
+  agendaItem   MeetingAgendaItem? @relation(fields: [agendaItemId], references: [id])
+  textAr       String
+  textEn       String?
+  status       DecisionStatus     @default(OPEN)
+  ownerId      String?
+  owner        BoardUser?         @relation("DecisionOwnedBy", fields: [ownerId], references: [id])
+  dueDate      DateTime?
+  createdById  String
+  createdBy    BoardUser          @relation("DecisionCreatedBy", fields: [createdById], references: [id])
+  approvedById String?
+  approvedBy   BoardUser?         @relation("DecisionApprovedBy", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+enum DecisionStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+// ============ MINUTES ============
+
+model Minutes {
+  id                  String    @id @default(cuid())
+  meetingId           String    @unique
+  meeting             Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  contentJson         Json?
+  contentHtml         String
+  generatedAt         DateTime  @default(now())
+  finalizedAt         DateTime?
+  finalizedById       String?
+  adoptedDocumentUrl   String?
+  adoptedDocumentName  String?
+  adoptedDocumentMime  String?
+  adoptedDocumentSize  Int?
+  adoptedById         String?
+  adoptedAt           DateTime?
+  attendeesNotifiedAt DateTime?
+
+  signatures MinutesSignature[]
+}
+
+model MinutesSignature {
+  id                  String    @id @default(cuid())
+  minutesId           String
+  minutes             Minutes   @relation(fields: [minutesId], references: [id], onDelete: Cascade)
+  userId              String
+  user                BoardUser @relation(fields: [userId], references: [id])
+  signatureImageUrl   String?
+  typedName           String?
+  signedAt            DateTime  @default(now())
+  ip                  String?
+  userAgent           String?
+  hash                String?
+
+  @@unique([minutesId, userId])
+}
+
+// ============ NOTIFICATION ============
+
+model BoardNotification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      BoardUser @relation(fields: [userId], references: [id])
+  meetingId String?
+  meeting   Meeting?  @relation(fields: [meetingId], references: [id])
+  type      String
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// ============ QUORUM ============
+
+model MeetingTypeQuorumPolicy {
+  meetingType          MeetingType    @id
+  quorumRequired       Boolean        @default(true)
+  ruleMode             QuorumRuleMode @default(ABSOLUTE_MAJORITY)
+  minAttendancePercent Int?
+  optionsJson          Json?
+  updatedAt            DateTime       @updatedAt
+}
+
+enum QuorumRuleMode {
+  ABSOLUTE_MAJORITY
+  TWO_THIRDS
+  MIN_PERCENT
+}
+
+// ============ POSITIONS ============
+
+model OrganizationalPosition {
+  code      String           @id
+  labelAr   String
+  labelEn   String?
+  level     Int              @default(0)
+  category  PositionCategory @default(BOARD)
+  sortOrder Int              @default(0)
+  isActive  Boolean          @default(true)
+
+  users BoardUser[]
+}
+
+enum PositionCategory {
+  BOARD
+  EXECUTIVE
+  TECHNICAL
+  ADMINISTRATIVE
+}

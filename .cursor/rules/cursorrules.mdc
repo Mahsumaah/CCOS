@@ -1,0 +1,101 @@
+---
+description: 
+alwaysApply: true
+---
+
+# CCOS Project Rules
+
+## UI Components
+- ONLY use shadcn/ui components for ALL UI elements. 
+  Never create custom components when a shadcn equivalent exists.
+- Import from @/components/ui/ (Button, Card, Input, Select, 
+  Dialog, Sheet, Table, Tabs, Badge, Avatar, Dropdown, 
+  Tooltip, Skeleton, Toast/Sonner, etc.)
+- If a shadcn component doesn't exist for a need, 
+  compose it from existing shadcn primitives.
+- Never install other UI libraries (Material UI, Ant Design, 
+  Chakra, Radix directly, Headless UI, etc.)
+- Use Lucide React for all icons. Never install other icon packs.
+
+## Styling
+- Tailwind CSS only. No inline styles. No CSS modules. 
+  No styled-components.
+- Use shadcn CSS variables (--primary, --secondary, --muted, 
+  --accent, --border, etc.) for all colors.
+- Never hardcode hex colors in components — reference 
+  Tailwind classes mapped to CSS variables.
+
+## Design Patterns
+- Use shadcn Card for all card layouts
+- Use shadcn Table for all data tables
+- Use shadcn Dialog for modals
+- Use shadcn Sheet for side panels
+- Use shadcn Tabs for tabbed interfaces
+- Use shadcn Form + react-hook-form + zod for all forms
+- Use shadcn Select / Combobox for dropdowns
+- Use shadcn Badge for status chips and labels
+- Use shadcn Skeleton for loading states
+- Use Sonner (shadcn toast) for all notifications/toasts
+- Use shadcn AlertDialog for confirmations
+
+## i18n
+- All user-facing text must come from next-intl translations.
+- Never hardcode Arabic or English strings in components.
+- Use useTranslations() hook in client components.
+- Use getTranslations() in server components.
+
+## Data
+- All database queries must filter by tenantId.
+- Use Prisma client from @/lib/prisma.
+- Use server components for data fetching when possible.
+- Use API routes only when client interaction is needed.
+
+## Fonts
+- Arabic locale: Cairo
+- English locale: Montserrat
+- Never use other fonts.
+
+## Direction
+- Arabic: dir="rtl"
+- English: dir="ltr"
+- Use logical CSS properties (ms-, me-, ps-, pe-) 
+  instead of left/right when possible.
+
+## Icons
+- ONLY use Lucide React icons. These are the shadcn 
+  ecosystem icons.
+- Import from "lucide-react" package only.
+- Never use emoji as icons (no 📋 👥 🗳️ 📝 etc.)
+- Never use Heroicons, Font Awesome, React Icons, 
+  Material Icons, or any other icon library.
+- Never use Unicode symbols or emoji as visual elements.
+- Every icon must be a Lucide React component 
+  (e.g., <Calendar />, <Users />, <Vote />, 
+  <FileText />, <Plus />, <Trash2 />, etc.)
+
+## Bilingual & Direction (CRITICAL)
+- Every single page, component, modal, dialog, sheet, 
+  toast, empty state, error message, button label, 
+  placeholder, table header, and tooltip MUST work 
+  in both Arabic and English.
+- Never hardcode ANY text string — always use 
+  next-intl translations (useTranslations for client, 
+  getTranslations for server).
+- If you add a new string, add it to BOTH 
+  messages/ar.json AND messages/en.json immediately.
+- Arabic locale = dir="rtl", English locale = dir="ltr".
+- Always use Tailwind logical properties:
+  - Use ms-* (margin-inline-start) not ml-*
+  - Use me-* (margin-inline-end) not mr-*
+  - Use ps-* (padding-inline-start) not pl-*
+  - Use pe-* (padding-inline-end) not pr-*
+  - Use start-* not left-*
+  - Use end-* not right-*
+  - Use text-start not text-left
+  - Use text-end not text-right
+- For flex layouts that should flip in RTL, 
+  use flex-row (Tailwind auto-flips with dir).
+- Test every component mentally in both directions 
+  before writing it.
+- Date formatting must respect locale 
+  (Arabic numerals + month names for ar).

@@ -1,0 +1,139 @@
+{
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How it Works",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "signIn": "Sign in",
+    "startFree": "Start Free",
+    "menu": "Menu",
+    "appearance": "Display"
+  },
+  "hero": {
+    "badge": "Board Meetings Management Platform",
+    "title": "Manage Board Meetings with Efficiency and Professionalism",
+    "subtitle": "All-in-one platform for meetings, voting, decisions, and minutes — in Arabic and English",
+    "ctaPrimary": "Start Free",
+    "ctaSecondary": "Watch Demo",
+    "noCard": "No credit card required"
+  },
+  "stats": {
+    "v1": "100+",
+    "l1": "Organizations",
+    "v2": "500+",
+    "l2": "Meetings Monthly",
+    "v3": "1000+",
+    "l3": "Decisions Made",
+    "v4": "99.9%",
+    "l4": "Uptime"
+  },
+  "features": {
+    "sectionTitle": "Everything You Need to Manage Your Meetings",
+    "f1Title": "Meeting Management",
+    "f1Desc": "Schedule and manage board and committee meetings",
+    "f2Title": "Live Voting",
+    "f2Desc": "Instant voting with live results and quorum tracking",
+    "f3Title": "Decision Tracking",
+    "f3Desc": "Document and track decision implementation",
+    "f4Title": "Auto Minutes",
+    "f4Desc": "Auto-generate meeting minutes and export to Word",
+    "f5Title": "E-Signatures",
+    "f5Desc": "Sign minutes electronically by drawing or typing",
+    "f6Title": "Fine-Grained Permissions",
+    "f6Desc": "Full control over each user's permissions",
+    "f7Title": "Member Management",
+    "f7Desc": "Manage board members, roles, and positions",
+    "f8Title": "Arabic & English",
+    "f8Desc": "Full Arabic and English interface with RTL support"
+  },
+  "how": {
+    "sectionTitle": "How It Works",
+    "step1Title": "Create Your Account",
+    "step1Desc": "Register your organization and add board members",
+    "step2Title": "Schedule a Meeting",
+    "step2Desc": "Create a meeting with agenda and invitees",
+    "step3Title": "Make Decisions",
+    "step3Desc": "Vote, decide, and document minutes — all in one place"
+  },
+  "pricing": {
+    "sectionTitle": "Pricing & Subscriptions",
+    "sectionSubtitle": "All plans include a free 3-day trial",
+    "starter": {
+      "name": "Starter",
+      "price": "4,900 SAR / Year",
+      "description": "For small teams and startups",
+      "f1": "Up to 7 users",
+      "f2": "Meeting management",
+      "f3": "Agenda management",
+      "f4": "Voting system",
+      "f5": "Auto minutes (PDF)",
+      "f6": "Basic archiving",
+      "cta": "Start Free Trial"
+    },
+    "professional": {
+      "badge": "Most Popular",
+      "name": "Professional",
+      "priceWas": "9,800 SAR",
+      "price": "6,900 SAR / Year",
+      "offerBadge": "First Year Offer",
+      "description": "For organizations and executive teams",
+      "f1": "Up to 12 users",
+      "f2": "All Starter features",
+      "f3": "Decision tracking system",
+      "f4": "Assign responsibility per decision",
+      "f5": "Execution tracking with deadlines",
+      "f6": "Electronic signature",
+      "f7": "Advanced permissions",
+      "f8": "Technical support",
+      "cta": "Start Free Trial"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "18,000 SAR / Year",
+      "description": "For large organizations and government entities",
+      "f1": "Up to 18 users",
+      "f2": "All Professional features",
+      "f3": "Dedicated subdomain",
+      "f4": "Customization per entity needs",
+      "f5": "Dedicated support",
+      "f6": "Setup & onboarding",
+      "f7": "Future integrations readiness",
+      "cta": "Contact Us"
+    },
+    "addons": {
+      "title": "Additional Users",
+      "body": "Add users to any plan at 34 SAR/user/month (billed annually within the subscription)."
+    },
+    "whatTitle": "What is CCOS?",
+    "whatBody": "CCOS is not just a meeting management system. It is a Governance Operating System designed for organizations that require structured decision-making, clear accountability, and professional execution tracking."
+  },
+  "faq": {
+    "sectionTitle": "FAQ",
+    "q1": "Is there a free trial?",
+    "a1": "Yes, all plans include a free 3-day trial.",
+    "q2": "Does it fully support Arabic?",
+    "a2": "Yes, full Arabic interface with RTL support and future Hijri date support.",
+    "q3": "Can I export minutes?",
+    "a3": "Yes, you can export minutes as a Word file with signatures.",
+    "q4": "Can I add more users than the limit?",
+    "a4": "Yes, additional users can be added at 34 SAR/user/month.",
+    "q5": "Is our data secure?",
+    "a5": "Yes, we use SSL encryption and isolated databases for each organization.",
+    "q6": "Can I upgrade later?",
+    "a6": "Yes, you can upgrade anytime from organization settings."
+  },
+  "footer": {
+    "tagline": "Board Meetings Management Platform",
+    "colProduct": "Product",
+    "colCompany": "Company",
+    "colLegal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "© 2026 CCOS. All rights reserved."
+  }
+}

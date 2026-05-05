@@ -20,7 +20,12 @@ export function CcosLogo({ className, maxHeight = 40, priority }: CcosLogoProps)
       width={240}
       height={80}
       priority={priority}
-      className={cn("h-auto w-auto object-contain", className)}
+      className={cn(
+        "h-auto w-auto object-contain",
+        /* Dark theme: PNG mark is dark-on-dark on sidebar/header — read as white */
+        "dark:brightness-0 dark:invert",
+        className,
+      )}
       style={{ maxHeight: `${maxHeight}px` }}
     />
   );

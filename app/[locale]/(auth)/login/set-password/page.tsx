@@ -51,7 +51,7 @@ function AuthCardShell({
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
             <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-black/5">
-              <CcosLogo maxHeight={60} className="mx-auto block" priority />
+              <CcosLogo maxHeight={72} className="mx-auto block" priority />
             </div>
           </div>
           <div className="space-y-1">

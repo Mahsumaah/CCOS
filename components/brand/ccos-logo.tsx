@@ -1,32 +1,44 @@
-import Image from "next/image";
-
 import { cn } from "@/lib/utils";
 
 type CcosLogoProps = {
   className?: string;
-  /** Max height in px (width scales) */
+  /** Height in px; width follows aspect ratio */
   maxHeight?: number;
+  /** Kept for API compatibility (no image LCP) */
   priority?: boolean;
 };
 
 /**
- * Brand mark from `/public/ccos-1.png`. Add that asset to the repo if missing.
+ * Vector wordmark — no external PNG required. Uses `currentColor` so it follows
+ * light/dark foreground and stays visible on any header/sidebar background.
  */
-export function CcosLogo({ className, maxHeight = 40, priority }: CcosLogoProps) {
+export function CcosLogo({ className, maxHeight = 44, priority: _p }: CcosLogoProps) {
   return (
-    <Image
-      src="/ccos-1.png"
-      alt="CCOS"
-      width={240}
-      height={80}
-      priority={priority}
-      className={cn(
-        "h-auto w-auto object-contain",
-        /* Dark theme: PNG mark is dark-on-dark on sidebar/header — read as white */
-        "dark:brightness-0 dark:invert",
-        className,
-      )}
-      style={{ maxHeight: `${maxHeight}px` }}
-    />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 156 36"
+      fill="currentColor"
+      className={cn("block shrink-0 text-foreground", className)}
+      style={{
+        height: maxHeight,
+        width: "auto",
+        minHeight: 28,
+        minWidth: 72,
+      }}
+      role="img"
+      aria-label="CCOS"
+    >
+      <title>CCOS</title>
+      <text
+        x="0"
+        y="28"
+        fontSize="30"
+        fontWeight="800"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+        letterSpacing="-0.04em"
+      >
+        CCOS
+      </text>
+    </svg>
   );
 }

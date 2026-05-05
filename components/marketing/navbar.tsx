@@ -79,7 +79,7 @@ export function MarketingNavbar() {
           className="flex shrink-0 items-center"
           aria-label={tCommon("appName")}
         >
-          <CcosLogo maxHeight={36} priority />
+          <CcosLogo maxHeight={48} priority />
         </Link>
 
         <NavLinks className="mx-auto hidden lg:flex" />

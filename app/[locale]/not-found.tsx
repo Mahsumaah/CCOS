@@ -20,7 +20,7 @@ export default async function LocaleNotFound({
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-8 bg-background px-4 py-16 text-foreground">
       <Link href="/" locale={loc} className="shrink-0" aria-label="CCOS">
-        <CcosLogo maxHeight={40} />
+        <CcosLogo maxHeight={56} />
       </Link>
       <div className="flex max-w-md flex-col items-center gap-4 text-center">
         <p className="text-primary text-7xl font-black tabular-nums tracking-tight sm:text-8xl">

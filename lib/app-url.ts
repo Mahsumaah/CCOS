@@ -1,7 +1,9 @@
 /** Public site origin for absolute links (no trailing slash). */
 export function getPublicAppUrl(): string {
-  const next = process.env.NEXTAUTH_URL?.trim().replace(/\/$/, "");
-  if (next) return next;
+  const nextAuth = process.env.NEXTAUTH_URL?.trim().replace(/\/$/, "");
+  if (nextAuth) return nextAuth;
+  const publicUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
+  if (publicUrl) return publicUrl;
   const vercel = process.env.VERCEL_URL?.trim().replace(/\/$/, "");
   if (vercel) {
     return vercel.startsWith("http") ? vercel : `https://${vercel}`;

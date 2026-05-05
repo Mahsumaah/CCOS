@@ -37,6 +37,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { absolutizeCallbackUrl } from "@/lib/absolutize-callback-url";
 import { getRoleLabel, sidebarRoleBadgeClassName } from "@/lib/board-roles";
 import { Link, usePathname, useRouter } from "@/lib/i18n/routing";
 import { usePermissions } from "@/lib/permissions-context";
@@ -194,7 +195,9 @@ export function DashboardShell({
   }
 
   async function onLogout() {
-    await signOut({ callbackUrl: `/${locale}/login` });
+    await signOut({
+      callbackUrl: absolutizeCallbackUrl(`/${locale}/login`),
+    });
   }
 
   return (

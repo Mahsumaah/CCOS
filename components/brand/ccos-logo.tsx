@@ -2,43 +2,32 @@ import { cn } from "@/lib/utils";
 
 type CcosLogoProps = {
   className?: string;
-  /** Height in px; width follows aspect ratio */
+  /** Approximate cap height for the wordmark (px) */
   maxHeight?: number;
-  /** Kept for API compatibility (no image LCP) */
+  /** Kept for API compatibility */
   priority?: boolean;
 };
 
 /**
- * Vector wordmark — no external PNG required. Uses `currentColor` so it follows
- * light/dark foreground and stays visible on any header/sidebar background.
+ * Wordmark: HTML text with `dir="ltr"` so it stays visible in RTL layouts (SVG
+ * `<text>` can mis-render). Light mode uses dark ink; dark mode uses white.
  */
 export function CcosLogo({ className, maxHeight = 44, priority: _p }: CcosLogoProps) {
+  const fontPx = Math.max(20, Math.round(maxHeight * 0.58));
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 156 36"
-      fill="currentColor"
-      className={cn("block shrink-0 text-foreground", className)}
-      style={{
-        height: maxHeight,
-        width: "auto",
-        minHeight: 28,
-        minWidth: 72,
-      }}
+    <span
+      dir="ltr"
+      translate="no"
+      className={cn(
+        "inline-block shrink-0 select-none font-black tracking-tight text-zinc-900 dark:text-white",
+        className,
+      )}
+      style={{ fontSize: fontPx, lineHeight: 1.05 }}
       role="img"
       aria-label="CCOS"
     >
-      <title>CCOS</title>
-      <text
-        x="0"
-        y="28"
-        fontSize="30"
-        fontWeight="800"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-        letterSpacing="-0.04em"
-      >
-        CCOS
-      </text>
-    </svg>
+      CCOS
+    </span>
   );
 }

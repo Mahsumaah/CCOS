@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { absolutizeCallbackUrl } from "@/lib/absolutize-callback-url";
 import { Link } from "@/lib/i18n/routing";
 import { isTrialExpired } from "@/lib/trial";
 
@@ -59,7 +60,11 @@ export function TrialExpiredOverlay({
             type="button"
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() => void signOut({ callbackUrl: `/${locale}/login` })}
+            onClick={() =>
+              void signOut({
+                callbackUrl: absolutizeCallbackUrl(`/${locale}/login`),
+              })
+            }
           >
             {t("logout")}
           </Button>

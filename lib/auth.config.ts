@@ -14,12 +14,16 @@ export const authConfig: NextAuthConfig = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = String(credentials.email).trim();
+        const password = String(credentials.password);
+        if (!email || !password) return null;
+
         const { prisma } = await import("./prisma");
         const bcrypt = (await import("bcryptjs")).default;
 
         const user = await prisma.boardUser.findFirst({
           where: {
-            email: credentials.email as string,
+            email: { equals: email, mode: "insensitive" },
             isActive: true,
           },
           include: { tenant: true },
@@ -27,10 +31,7 @@ export const authConfig: NextAuthConfig = {
 
         if (!user || !user.password) return null;
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.password,
-        );
+        const valid = await bcrypt.compare(password, user.password);
 
         if (!valid) return null;
 

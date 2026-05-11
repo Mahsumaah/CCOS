@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin-board-user";
 import { requirePermission, requireSession } from "@/lib/rbac";
 import { getDefaultPermissions } from "@/lib/board-permission-defs";
+import { absoluteAppUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/prisma";
 import { checkPlanLimit, planLimitForbiddenResponse } from "@/lib/plan-limits";
 import { postInviteUserBodySchema } from "@/lib/validations/users-api";
@@ -145,7 +146,9 @@ export async function POST(request: Request) {
         select: adminBoardUserSelect,
       });
       const userJson = toAdminBoardUserJson(created);
-      const setupUrl = `/login/set-password?token=${encodeURIComponent(passwordSetupToken)}`;
+      const setupPath = `/login/set-password?token=${encodeURIComponent(passwordSetupToken)}`;
+      const setupUrl = setupPath;
+      const setupFullUrl = absoluteAppUrl("ar", setupPath);
 
       console.log("Email skipped:", {
         to: email,
@@ -153,7 +156,7 @@ export async function POST(request: Request) {
       });
 
       return NextResponse.json(
-        { user: userJson, setupUrl },
+        { user: userJson, setupUrl, setupFullUrl },
         { status: 201 },
       );
     } catch (e: unknown) {

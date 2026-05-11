@@ -333,6 +333,7 @@ export function UsersClient({
       const data = (await res.json().catch(() => ({}))) as PlanLimitApiBody & {
         user?: unknown;
         setupUrl?: string;
+        setupFullUrl?: string;
       };
       if (!res.ok) {
         if (res.status === 403 && data.upgradeRequired) {
@@ -343,11 +344,16 @@ export function UsersClient({
         return;
       }
       toast.success(t("toastInvited"));
-      if (data.setupUrl && typeof window !== "undefined") {
-        const path = data.setupUrl.startsWith("/")
-          ? data.setupUrl
-          : `/${data.setupUrl}`;
-        const full = `${window.location.origin}/${locale}${path}`;
+      if (typeof window !== "undefined" && (data.setupFullUrl || data.setupUrl)) {
+        const full =
+          typeof data.setupFullUrl === "string" && data.setupFullUrl.startsWith("http")
+            ? data.setupFullUrl
+            : (() => {
+                const path = (data.setupUrl ?? "").startsWith("/")
+                  ? (data.setupUrl as string)
+                  : `/${data.setupUrl ?? ""}`;
+                return `${window.location.origin}/${locale}${path}`;
+              })();
         setInviteSetupFullUrl(full);
       } else {
         setInviteOpen(false);

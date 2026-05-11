@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
-  const token = new URL(request.url).searchParams.get("token")?.trim();
+  const raw = new URL(request.url).searchParams.get("token");
+  const token = typeof raw === "string" ? raw.trim() : "";
   if (!token) {
     return NextResponse.json({ error: "Invalid or expired" }, { status: 400 });
   }

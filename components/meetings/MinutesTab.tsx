@@ -64,6 +64,7 @@ import {
   MinutesHtmlEditor,
   MinutesHtmlEditorToolbar,
 } from "@/components/meetings/minutes-html-editor";
+import { LiveAiTranscriptDraftCard } from "@/components/meetings/LiveAiTranscriptDraftCard";
 import { MinutesWorkflowStepper } from "@/components/meetings/minutes-workflow-stepper";
 import { usePlanUpgrade } from "@/components/plan/plan-upgrade-provider";
 import { formatDateTime, formatFileSize } from "@/lib/format";
@@ -225,6 +226,9 @@ export function MinutesTab({
   const canGenerate =
     perms.canFinalizeMinutes &&
     (meetingStatus === "ENDED" || meetingStatus === "ARCHIVED");
+
+  const canUseAiTranscriptDraft =
+    perms.canFinalizeMinutes || perms.canManageMeetings;
 
   const isFinalized = Boolean(minutes?.finalizedAt);
   const isAdopted = Boolean(minutes?.adoptedDocumentUrl && minutes?.adoptedAt);
@@ -593,6 +597,16 @@ export function MinutesTab({
             {busy === "generate" ? tMin("generating") : tMin("generate")}
           </Button>
         ) : null}
+        {canUseAiTranscriptDraft &&
+        (meetingStatus === "LIVE" ||
+          meetingStatus === "ENDED" ||
+          meetingStatus === "ARCHIVED") ? (
+          <LiveAiTranscriptDraftCard
+            meetingId={meetingId}
+            locale={locale}
+            canUse
+          />
+        ) : null}
       </div>
     );
   }
@@ -616,6 +630,22 @@ export function MinutesTab({
         isAdopted={isAdopted}
         attendeesNotified={attendeesNotified}
       />
+      {canUseAiTranscriptDraft &&
+      !isFinalized &&
+      (meetingStatus === "LIVE" ||
+        meetingStatus === "ENDED" ||
+        meetingStatus === "ARCHIVED") ? (
+        <LiveAiTranscriptDraftCard
+          meetingId={meetingId}
+          locale={locale}
+          canUse
+          onAppendHtml={(fragment) => {
+            setDraftHtml((prev) => `${prev}${fragment}`);
+            setEditMode(true);
+          }}
+          appendDisabled={busy !== null}
+        />
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {isAdopted ? (
           <Badge variant="default">{t("minutesAdoptedBadge")}</Badge>

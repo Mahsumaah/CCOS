@@ -1,10 +1,12 @@
-import { LiveVoteChoice } from "@prisma/client";
+import { LiveVoteChoice, LiveVoteRule, type Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { writeAuditLog } from "@/lib/audit-log";
 import { currentLiveRoleForUser, ensureMeetingLiveAccess } from "@/lib/live-meeting";
-import { hasLiveCapability } from "@/lib/live-permissions";
+import { LIVE_VOTING_ALLOWED_ROLES, hasLiveCapability } from "@/lib/live-permissions";
+import { getLivePresentUserIds } from "@/lib/live-session-utils";
+import { buildLiveVoteResult } from "@/lib/live-vote-result";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/rbac";
 
@@ -30,9 +32,21 @@ export async function POST(request: Request, context: RouteContext) {
   });
   if (!access.ok) return access.response;
 
+  if (access.meeting.status !== "LIVE") {
+    return NextResponse.json({ error: "meeting_not_live" }, { status: 400 });
+  }
+
   const role = currentLiveRoleForUser(session.user.role);
-  if (!hasLiveCapability(role, "canSpeak")) {
+  if (!LIVE_VOTING_ALLOWED_ROLES.includes(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const invitation = await prisma.meetingInvitation.findFirst({
+    where: { meetingId, userId: session.user.id },
+    select: { id: true },
+  });
+  if (!invitation && !session.user.permManageMeetings) {
+    return NextResponse.json({ error: "not_invited" }, { status: 403 });
   }
 
   const json = (await request.json().catch(() => ({}))) as unknown;
@@ -43,10 +57,25 @@ export async function POST(request: Request, context: RouteContext) {
 
   const vote = await prisma.liveVote.findFirst({
     where: { id: voteId, meetingId, tenantId: session.user.tenantId },
-    select: { id: true, isOpen: true, allowedRoles: true },
+    select: { id: true, isOpen: true, allowedRoles: true, liveSessionId: true },
   });
   if (!vote) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!vote.isOpen) return NextResponse.json({ error: "Vote closed" }, { status: 400 });
+
+  if (vote.liveSessionId) {
+    const inSession = await prisma.liveParticipantSession.findFirst({
+      where: {
+        liveSessionId: vote.liveSessionId,
+        userId: session.user.id,
+        leftAt: null,
+        tenantId: session.user.tenantId,
+      },
+      select: { id: true },
+    });
+    if (!inSession) {
+      return NextResponse.json({ error: "join_live_to_vote" }, { status: 403 });
+    }
+  }
 
   const allowedRoles = Array.isArray(vote.allowedRoles) ? vote.allowedRoles : [];
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
@@ -110,24 +139,73 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid body", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const ballots = await prisma.liveVoteBallot.findMany({
-    where: { liveVoteId: voteId },
-    select: { choice: true },
-  });
-
-  const totals = {
-    yes: ballots.filter((b) => b.choice === "YES").length,
-    no: ballots.filter((b) => b.choice === "NO").length,
-    abstain: ballots.filter((b) => b.choice === "ABSTAIN").length,
-    total: ballots.length,
-  };
-
   const existing = await prisma.liveVote.findFirst({
     where: { id: voteId, meetingId, tenantId: session.user.tenantId },
-    select: { id: true },
+    include: {
+      ballots: { include: { user: { select: { role: true } } } },
+    },
   });
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const meeting = await prisma.meeting.findFirst({
+    where: { id: meetingId, tenantId: session.user.tenantId },
+    include: {
+      invitations: {
+        select: {
+          userId: true,
+          status: true,
+          attendanceCheckedInAt: true,
+        },
+      },
+      delegations: {
+        where: { revokedAt: null },
+        select: { fromUserId: true, toUserId: true, revokedAt: true },
+      },
+    },
+  });
+  if (!meeting) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const policy = await prisma.meetingTypeQuorumPolicy.findUnique({
+    where: { meetingType: meeting.type },
+  });
+
+  let livePresentUserIds: string[] = [];
+  if (existing.liveSessionId) {
+    livePresentUserIds = await getLivePresentUserIds(
+      existing.liveSessionId,
+      session.user.tenantId,
+    );
+  }
+
+  const needsQuorum =
+    existing.rule === LiveVoteRule.QUORUM_GATED || existing.quorumRequired;
+
+  const result = buildLiveVoteResult({
+    rule: existing.rule,
+    ballots: existing.ballots.map((b) => ({
+      choice: b.choice,
+      user: { role: b.user.role },
+    })),
+    quorumContext: needsQuorum
+      ? {
+          meetingType: meeting.type,
+          policy,
+          invitations: meeting.invitations,
+          delegations: meeting.delegations,
+          livePresentUserIds,
+        }
+      : undefined,
+  });
+
+  if (needsQuorum && !result.quorum?.met) {
+    return NextResponse.json(
+      { error: "quorum_not_met_close", quorum: result.quorum },
+      { status: 400 },
+    );
   }
 
   const updated = await prisma.liveVote.update({
@@ -136,7 +214,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       isOpen: false,
       closedAt: new Date(),
       closedById: session.user.id,
-      resultJson: totals,
+      resultJson: result as Prisma.InputJsonValue,
     },
   });
 
@@ -148,7 +226,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     action: "LIVE_VOTE_CLOSED",
     targetType: "LiveVote",
     targetId: voteId,
-    payloadJson: totals,
+    payloadJson: result as object,
   });
 
   return NextResponse.json(updated);

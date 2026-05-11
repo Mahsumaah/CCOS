@@ -132,6 +132,7 @@ export default async function MeetingDetailPage({
       meeting={serialized}
       locale={locale === "en" ? "en" : "ar"}
       currentUserId={session.user.id}
+      currentUserName={session.user.name ?? session.user.email ?? ""}
       initialQuorum={initialQuorum}
       initialOpenVotesCount={openVotesCount}
       initialOpenDecisionsCount={openDecisionsCount}

@@ -1,4 +1,4 @@
-import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
+import { AccessToken, EgressClient, RoomServiceClient } from "livekit-server-sdk";
 
 const apiKey = process.env.LIVEKIT_API_KEY;
 const apiSecret = process.env.LIVEKIT_API_SECRET;
@@ -24,6 +24,13 @@ export function getLiveKitRoomService(): RoomServiceClient {
     throw new Error("LIVEKIT_HTTP_URL/LIVEKIT_API_KEY/LIVEKIT_API_SECRET missing");
   }
   return new RoomServiceClient(httpUrl, apiKey, apiSecret);
+}
+
+export function getLiveKitEgressClient(): EgressClient {
+  if (!httpUrl || !apiKey || !apiSecret) {
+    throw new Error("LIVEKIT_HTTP_URL/LIVEKIT_API_KEY/LIVEKIT_API_SECRET missing");
+  }
+  return new EgressClient(httpUrl, apiKey, apiSecret);
 }
 
 export async function buildLiveKitToken(params: {

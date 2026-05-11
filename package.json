@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
     "postinstall": "prisma generate",
     "db:migrate": "node ./node_modules/dotenv-cli/cli.js -e .env -e .env.local -- prisma migrate dev",
     "db:deploy": "node ./node_modules/dotenv-cli/cli.js -e .env -e .env.local -- prisma migrate deploy",
@@ -78,7 +79,8 @@
     "prisma": "^5.22.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.19.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "prisma": {
     "seed": "node ./node_modules/dotenv-cli/cli.js -e .env -e .env.local -- npx tsx prisma/seed.ts"

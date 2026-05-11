@@ -219,6 +219,8 @@ enum ArtifactType {
 enum AuditAction {
   LIVE_SESSION_OPENED
   LIVE_SESSION_CLOSED
+  LIVE_RECORDING_STARTED
+  LIVE_RECORDING_STOP_REQUESTED
   PARTICIPANT_JOINED
   PARTICIPANT_LEFT
   PARTICIPANT_REJOINED
@@ -235,6 +237,8 @@ enum AuditAction {
   LIVE_DECISION_APPROVED
   ARTIFACT_CREATED
   MINUTES_SIGNED
+  TRANSCRIPT_SEGMENTS_INGESTED
+  LIVE_AI_DRAFT_GENERATED
 }
 
 model LiveSession {
@@ -254,6 +258,9 @@ model LiveSession {
   recordingStatus LiveRecordingStatus @default(NOT_STARTED)
   recordingUrl  String?
   recordingError String?
+  /// LiveKit egress id while recording or until webhook finalizes
+  egressId      String?
+  recordingStartedAt DateTime?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 

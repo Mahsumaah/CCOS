@@ -2,6 +2,7 @@ import { LiveRecordingStatus, LiveSessionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { writeAuditLog } from "@/lib/audit-log";
+import { canApproveOrRejectLiveDecision } from "@/lib/live-decision-permissions";
 import {
   buildLiveRoomName,
   canEndLive,
@@ -55,6 +56,9 @@ export async function GET(_request: Request, context: RouteContext) {
       canOpenLiveVote: hasLiveCapability(liveRole, "canOpenVote"),
       canRecordLiveDecision: hasLiveCapability(liveRole, "canRecordDecision"),
       canModerateMedia: hasLiveCapability(liveRole, "canModerateMedia"),
+      canControlRecording:
+        session.user.permManageMeetings || hasLiveCapability(liveRole, "canModerateMedia"),
+      canApproveLiveDecision: canApproveOrRejectLiveDecision(liveRole),
     },
   });
 }

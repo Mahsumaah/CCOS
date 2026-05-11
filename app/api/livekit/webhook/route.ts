@@ -1,4 +1,5 @@
-import { TrackSource, WebhookReceiver } from "livekit-server-sdk";
+import { ArtifactType, LiveRecordingStatus } from "@prisma/client";
+import { TrackSource as LkTrackSource, WebhookReceiver } from "livekit-server-sdk";
 import { NextResponse } from "next/server";
 
 import { writeAuditLog } from "@/lib/audit-log";
@@ -14,6 +15,15 @@ function getWebhookReceiver() {
   return new WebhookReceiver(key, secret);
 }
 
+type EgressEndedPayload = {
+  egressId?: string;
+  roomName?: string;
+  status?: number | string;
+  error?: string;
+  fileResults?: Array<{ filename?: string; location?: string }>;
+  streamResults?: Array<{ url?: string }>;
+};
+
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("authorization") ?? "";
@@ -23,13 +33,78 @@ export async function POST(request: Request) {
     const event = await receiver.receive(body, authHeader);
 
     const roomName = event.room?.name;
-    if (!roomName) return NextResponse.json({ ok: true });
+    if (!roomName && event.event !== "egress_ended") {
+      return NextResponse.json({ ok: true });
+    }
 
-    const liveSession = await prisma.liveSession.findFirst({
-      where: { roomName },
-      orderBy: { createdAt: "desc" },
-      include: { meeting: { select: { id: true, tenantId: true } } },
-    });
+    const liveSession =
+      roomName != null
+        ? await prisma.liveSession.findFirst({
+            where: { roomName },
+            orderBy: { createdAt: "desc" },
+            include: { meeting: { select: { id: true, tenantId: true } } },
+          })
+        : null;
+
+    if (event.event === "egress_ended") {
+      const info = (event as unknown as { egressInfo?: EgressEndedPayload }).egressInfo;
+      const egressId = info?.egressId;
+      if (!egressId) return NextResponse.json({ ok: true });
+
+      const sessionByEgress = await prisma.liveSession.findFirst({
+        where: { egressId },
+        include: { meeting: { select: { id: true, tenantId: true } } },
+      });
+      if (!sessionByEgress) return NextResponse.json({ ok: true });
+
+      const tenantId = sessionByEgress.meeting.tenantId;
+      const meetingId = sessionByEgress.meeting.id;
+      const fileUrl =
+        info.fileResults?.find((f) => f.location)?.location ??
+        info.streamResults?.find((s) => s.url)?.url ??
+        null;
+      const errMsg = info.error?.trim() || null;
+      const success = Boolean(fileUrl) && !errMsg;
+
+      await prisma.liveSession.update({
+        where: { id: sessionByEgress.id },
+        data: {
+          egressId: null,
+          recordingStatus: success
+            ? LiveRecordingStatus.COMPLETED
+            : LiveRecordingStatus.FAILED,
+          recordingUrl: success ? fileUrl : sessionByEgress.recordingUrl,
+          recordingError: success ? null : errMsg ?? "egress_failed",
+        },
+      });
+
+      if (success && fileUrl) {
+        const artifact = await prisma.meetingArtifact.create({
+          data: {
+            tenantId,
+            meetingId,
+            liveSessionId: sessionByEgress.id,
+            type: ArtifactType.RECORDING,
+            url: fileUrl,
+            name: `ccos-live-recording-${sessionByEgress.id}.mp4`,
+            mime: "video/mp4",
+            source: "ccos_live",
+          },
+        });
+        await writeAuditLog({
+          tenantId,
+          meetingId,
+          liveSessionId: sessionByEgress.id,
+          actorId: null,
+          action: "ARTIFACT_CREATED",
+          targetType: "MeetingArtifact",
+          targetId: artifact.id,
+          payloadJson: { kind: "RECORDING" },
+        });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
 
     if (!liveSession) return NextResponse.json({ ok: true });
 
@@ -43,26 +118,57 @@ export async function POST(request: Request) {
         select: { id: true, role: true },
       });
       if (user) {
-        await prisma.liveParticipantSession.create({
-          data: {
+        const latest = await prisma.liveParticipantSession.findFirst({
+          where: { liveSessionId: liveSession.id, userId },
+          orderBy: { joinedAt: "desc" },
+        });
+
+        if (latest && latest.leftAt == null) {
+          await prisma.liveParticipantSession.update({
+            where: { id: latest.id },
+            data: { participantSid: event.participant.sid ?? latest.participantSid },
+          });
+        } else if (latest?.leftAt) {
+          await prisma.liveParticipantSession.update({
+            where: { id: latest.id },
+            data: {
+              leftAt: null,
+              participantSid: event.participant.sid,
+              reconnectCount: { increment: 1 },
+            },
+          });
+          await writeAuditLog({
             tenantId,
             meetingId,
             liveSessionId: liveSession.id,
-            userId,
-            participantSid: event.participant.sid,
-            role: boardRoleToLiveRole(user.role),
-          },
-        });
-        await writeAuditLog({
-          tenantId,
-          meetingId,
-          liveSessionId: liveSession.id,
-          actorId: userId,
-          action: "PARTICIPANT_JOINED",
-          targetType: "LiveParticipantSession",
-          targetId: event.participant.sid,
-          payloadJson: { participantName: event.participant.name ?? null },
-        });
+            actorId: userId,
+            action: "PARTICIPANT_REJOINED",
+            targetType: "LiveParticipantSession",
+            targetId: event.participant.sid,
+            payloadJson: { participantName: event.participant.name ?? null },
+          });
+        } else {
+          await prisma.liveParticipantSession.create({
+            data: {
+              tenantId,
+              meetingId,
+              liveSessionId: liveSession.id,
+              userId,
+              participantSid: event.participant.sid,
+              role: boardRoleToLiveRole(user.role),
+            },
+          });
+          await writeAuditLog({
+            tenantId,
+            meetingId,
+            liveSessionId: liveSession.id,
+            actorId: userId,
+            action: "PARTICIPANT_JOINED",
+            targetType: "LiveParticipantSession",
+            targetId: event.participant.sid,
+            payloadJson: { participantName: event.participant.name ?? null },
+          });
+        }
       }
     }
 
@@ -91,7 +197,7 @@ export async function POST(request: Request) {
 
     if (
       event.event === "track_published" &&
-      event.track?.source === TrackSource.SCREEN_SHARE &&
+      event.track?.source === LkTrackSource.SCREEN_SHARE &&
       event.participant?.identity
     ) {
       await writeAuditLog({
@@ -100,6 +206,22 @@ export async function POST(request: Request) {
         liveSessionId: liveSession.id,
         actorId: event.participant.identity,
         action: "SCREEN_SHARE_STARTED",
+        targetType: "Track",
+        targetId: event.track.sid,
+      });
+    }
+
+    if (
+      event.event === "track_unpublished" &&
+      event.track?.source === LkTrackSource.SCREEN_SHARE &&
+      event.participant?.identity
+    ) {
+      await writeAuditLog({
+        tenantId,
+        meetingId,
+        liveSessionId: liveSession.id,
+        actorId: event.participant.identity,
+        action: "SCREEN_SHARE_STOPPED",
         targetType: "Track",
         targetId: event.track.sid,
       });

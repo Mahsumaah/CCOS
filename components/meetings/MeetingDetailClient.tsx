@@ -305,6 +305,7 @@ export function MeetingDetailClient({
   meeting: initialMeeting,
   locale,
   currentUserId,
+  currentUserName,
   initialQuorum,
   initialOpenVotesCount,
   initialOpenDecisionsCount,
@@ -315,6 +316,7 @@ export function MeetingDetailClient({
   meeting: MeetingDetailDTO;
   locale: "ar" | "en";
   currentUserId: string;
+  currentUserName: string;
   initialQuorum: QuorumDTO | null;
   initialOpenVotesCount: number;
   initialOpenDecisionsCount: number;
@@ -1239,12 +1241,20 @@ export function MeetingDetailClient({
             meetingStatus={meeting.status}
             locale={locale}
             currentUserId={currentUserId}
+            currentUserName={currentUserName}
             agenda={meeting.agenda.map((a) => ({
               id: a.id,
               titleAr: a.titleAr,
               titleEn: a.titleEn ?? null,
             }))}
+            invitees={meeting.invitations.map((inv) => ({
+              id: inv.user.id,
+              name: inv.user.name,
+            }))}
             canManageMeetings={perms.canManageMeetings}
+            canUseAiTranscriptDraft={
+              perms.canFinalizeMinutes || perms.canManageMeetings
+            }
             isInvitee={isLiveInvitee}
             onMeetingUpdated={() => router.refresh()}
           />

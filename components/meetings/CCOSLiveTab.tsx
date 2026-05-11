@@ -150,9 +150,18 @@ export function CCOSLiveTab({
       });
       const body = (await res.json().catch(() => ({}))) as TokenPostResponse & {
         error?: string;
+        missingEnv?: string[];
       };
       if (res.status === 503 && body.error === "live_not_configured") {
-        toast.error(t("serverNotConfigured"));
+        const vars =
+          Array.isArray(body.missingEnv) && body.missingEnv.length > 0
+            ? body.missingEnv.join(", ")
+            : "";
+        toast.error(
+          vars
+            ? t("serverNotConfiguredFull", { vars })
+            : t("serverNotConfiguredFullUnknown"),
+        );
         return;
       }
       if (res.status === 400 && body.error === "meeting_not_live") {

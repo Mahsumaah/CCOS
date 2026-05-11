@@ -264,6 +264,8 @@
       "roomLabel": "Room",
       "roomHint": "Use the controls below to mute your microphone or stop your camera. Screen sharing is available from the toolbar when your role allows it.",
       "serverNotConfigured": "Video service is not configured for this environment.",
+      "serverNotConfiguredFull": "LiveKit is not configured. Missing: {vars}. In Vercel → Settings → Environment Variables, add these for the same target as this site (Preview deployments need Preview env; production domain needs Production env), then redeploy.",
+      "serverNotConfiguredFullUnknown": "LiveKit is not configured on the server. Check LIVEKIT_WS_URL, LIVEKIT_HTTP_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET in Vercel, then redeploy.",
       "tokenError": "Could not join the video room.",
       "meetingNotLive": "The meeting must be live before you can join video."
     },

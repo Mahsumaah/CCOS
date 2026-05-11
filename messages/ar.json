@@ -264,6 +264,8 @@
       "roomLabel": "الغرفة",
       "roomHint": "استخدم عناصر التحكم أدناه لكتم الميكروفون أو إيقاف الكاميرا. يتوفر مشاركة الشاشة من شريط الأدوات عندما يسمح دورك بذلك.",
       "serverNotConfigured": "خدمة الفيديو غير مهيأة لهذا البيئة.",
+      "serverNotConfiguredFull": "لم يُهيأ LiveKit. المتغيرات الناقصة: {vars}. في Vercel ← الإعدادات ← متغيرات البيئة، أضفها لنفس البيئة المرتبطة بهذا الموقع (معاينات Preview تحتاج متغيرات Preview؛ النطاق الإنتاجي يحتاج Production)، ثم أعد النشر.",
+      "serverNotConfiguredFullUnknown": "لم يُهيأ LiveKit على الخادم. تحقق من LIVEKIT_WS_URL و LIVEKIT_HTTP_URL و LIVEKIT_API_KEY و LIVEKIT_API_SECRET في Vercel، ثم أعد النشر.",
       "tokenError": "تعذر الانضمام إلى غرفة الفيديو.",
       "meetingNotLive": "يجب أن يكون الاجتماع مباشراً قبل الانضمام إلى الفيديو."
     },

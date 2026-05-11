@@ -206,7 +206,11 @@ function tableCell(
 function meetingInfoTable(data: MinutesData, locale: FormatLocale): Table {
   const m = data.meeting;
   const dash = locale === "ar" ? "—" : "—";
-  const loc = m.location?.trim() ? m.location : dash;
+  const rawLoc = m.location?.trim() ?? "";
+  const loc =
+    rawLoc && !/^https?:\/\//i.test(rawLoc)
+      ? rawLoc
+      : arEn(locale, "CCOS مباشر (داخل التطبيق)", "CCOS Live (in-app)");
 
   const rows: TableRow[] = [
     new TableRow({
@@ -254,7 +258,7 @@ function meetingInfoTable(data: MinutesData, locale: FormatLocale): Table {
     }),
     new TableRow({
       children: [
-        tableCell(locale, arEn(locale, "المكان", "Location"), { bold: true }),
+        tableCell(locale, arEn(locale, "مكان الاجتماع", "Venue"), { bold: true }),
         tableCell(locale, loc),
       ],
     }),

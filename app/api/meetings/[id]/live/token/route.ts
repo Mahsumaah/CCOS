@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { buildLiveKitToken, getLiveKitWsUrl } from "@/lib/livekit";
+import {
+  buildLiveKitToken,
+  getLiveKitWsUrl,
+  getMissingLiveKitTokenEnv,
+} from "@/lib/livekit";
 import { buildLiveRoomName, currentLiveRoleForUser, ensureMeetingLiveAccess } from "@/lib/live-meeting";
 import { hasLiveCapability } from "@/lib/live-permissions";
 import { prisma } from "@/lib/prisma";
@@ -44,6 +48,18 @@ export async function POST(_request: Request, context: RouteContext) {
   }
 
   const roomName = buildLiveRoomName(session.user.tenantId, meetingId);
+  const missingEnv = getMissingLiveKitTokenEnv();
+  if (missingEnv.length > 0) {
+    return NextResponse.json(
+      {
+        error: "live_not_configured",
+        missingEnv,
+        hint: "Add these in Vercel → Project → Settings → Environment Variables (Production), then redeploy.",
+      },
+      { status: 503 },
+    );
+  }
+
   let token: string;
   let wsUrl: string;
   try {
@@ -56,9 +72,13 @@ export async function POST(_request: Request, context: RouteContext) {
       canPublishData: true,
     });
     wsUrl = getLiveKitWsUrl();
-  } catch {
+  } catch (e) {
+    console.error("[live/token] LiveKit token error:", e);
     return NextResponse.json(
-      { error: "live_not_configured" },
+      {
+        error: "live_not_configured",
+        hint: "LIVEKIT_* env vars are set but token generation failed. Check API key/secret and redeploy.",
+      },
       { status: 503 },
     );
   }

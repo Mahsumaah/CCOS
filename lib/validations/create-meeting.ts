@@ -27,6 +27,7 @@ export const meetingFormSchema = z
       .number()
       .min(15, { message: "validationDurationMin" })
       .max(480, { message: "validationDurationMax" }),
+    /** Physical venue only; CCOS Live handles video (no external URLs). */
     location: z.string().optional(),
     agenda: z
       .array(agendaItemDraftSchema)
@@ -62,6 +63,15 @@ export const meetingFormSchema = z
         path: ["customMeetingType"],
       });
     }
+
+    const loc = data.location?.trim();
+    if (loc && /^https?:\/\//i.test(loc)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "validationVenueNoUrls",
+        path: ["location"],
+      });
+    }
   });
 
 export type MeetingFormValues = z.infer<typeof meetingFormSchema>;
@@ -93,6 +103,15 @@ export const meetingCreateJsonSchema = z
         code: z.ZodIssueCode.custom,
         message: "validationCustomMeetingTypeRequired",
         path: ["customMeetingType"],
+      });
+    }
+
+    const loc = data.location?.trim();
+    if (loc && /^https?:\/\//i.test(loc)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "validationVenueNoUrls",
+        path: ["location"],
       });
     }
   });

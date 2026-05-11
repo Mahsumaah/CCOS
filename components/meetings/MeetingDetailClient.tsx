@@ -14,14 +14,12 @@ import {
   CalendarDays,
   Circle,
   Clock,
-  ExternalLink,
   FileCheck,
   FilePlus,
   FileText,
   Pencil,
   Radio,
   Trash2,
-  Video,
   Vote,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -126,17 +124,6 @@ type LivePollPayload = {
 function isHttpUrl(location: string | null | undefined): boolean {
   if (!location?.trim()) return false;
   return /^https?:\/\//i.test(location.trim());
-}
-
-function isVideoConferenceLink(location: string | null | undefined): boolean {
-  if (!location) return false;
-  const u = location.toLowerCase();
-  return (
-    u.includes("zoom.") ||
-    u.includes("meet.google") ||
-    u.includes("teams.microsoft") ||
-    u.includes("webex.")
-  );
 }
 
 function meetingTypeDisplay(
@@ -496,9 +483,12 @@ export function MeetingDetailClient({
     perms.canEditMeetings &&
     (meeting.status === "SCHEDULED" || meeting.status === "LIVE");
 
-  const locationUrl = meeting.location?.trim() ?? "";
-  const showJoin = isHttpUrl(meeting.location);
-  const showVideoIcon = showJoin && isVideoConferenceLink(meeting.location);
+  const hasLegacyExternalLink =
+    Boolean(meeting.location?.trim()) && isHttpUrl(meeting.location);
+  const physicalVenue =
+    meeting.location?.trim() && !isHttpUrl(meeting.location)
+      ? meeting.location.trim()
+      : null;
 
   const attendedCount = useMemo(
     () =>
@@ -795,23 +785,17 @@ export function MeetingDetailClient({
               {formatDateTime(meeting.scheduledAt, locale)} ·{" "}
               {formatDuration(meeting.durationMin, locale)}
             </p>
-            {meeting.location ? (
-              <p className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-                {showVideoIcon ? (
-                  <Video className="text-muted-foreground size-4 shrink-0" />
-                ) : null}
-                {showJoin ? (
-                  <a
-                    href={locationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary font-medium underline-offset-4 hover:underline"
-                  >
-                    {locationUrl}
-                  </a>
-                ) : (
-                  <span>{meeting.location}</span>
-                )}
+            {physicalVenue ? (
+              <p className="text-muted-foreground text-sm">
+                <span className="font-medium text-foreground">
+                  {t("physicalVenueLabel")}
+                </span>{" "}
+                {physicalVenue}
+              </p>
+            ) : null}
+            {hasLegacyExternalLink ? (
+              <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
+                {t("ccosLiveLegacyLinkNotice")}
               </p>
             ) : null}
             {meeting.objectives ? (
@@ -823,15 +807,6 @@ export function MeetingDetailClient({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {showJoin ? (
-            <Button variant="default" size="sm" asChild>
-              <a href={locationUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4" />
-                {t("joinMeeting")}
-              </a>
-            </Button>
-          ) : null}
-
           {perms.canEditMeetings && meeting.status === "SCHEDULED" ? (
             <Button
               type="button"

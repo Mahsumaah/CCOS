@@ -15,6 +15,7 @@ export const MEETINGS_FORM_ERROR_KEYS = new Set([
   "validationDurationMin",
   "validationDurationMax",
   "validationGuestEmailItem",
+  "validationVenueNoUrls",
 ]);
 
 export function translateMeetingsFormError(

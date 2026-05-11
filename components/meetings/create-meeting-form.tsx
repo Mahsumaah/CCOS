@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { BoardRole } from "@prisma/client";
 import { MeetingSchedulingMode, MeetingType } from "@prisma/client";
@@ -145,12 +145,6 @@ export function CreateMeetingForm() {
 
   const schedulingMode = form.watch("schedulingMode");
   const meetingType = form.watch("type");
-  const locationVal = form.watch("location") ?? "";
-
-  const isLinkLocation = useMemo(
-    () => /^https?:\/\//i.test(locationVal.trim()),
-    [locationVal],
-  );
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -528,15 +522,15 @@ export function CreateMeetingForm() {
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("location")}</FormLabel>
+                <FormLabel>{t("venueOptionalLabel")}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder={t("placeOrLinkPlaceholder")} />
+                  <Input
+                    {...field}
+                    placeholder={t("venuePhysicalPlaceholder")}
+                    autoComplete="street-address"
+                  />
                 </FormControl>
-                {field.value?.trim() ? (
-                  <p className="text-muted-foreground text-xs">
-                    {isLinkLocation ? t("locationAsLink") : t("locationAsVenue")}
-                  </p>
-                ) : null}
+                <FormDescription>{t("venueCcosLiveHint")}</FormDescription>
                 <I18nFormMessage />
               </FormItem>
             )}

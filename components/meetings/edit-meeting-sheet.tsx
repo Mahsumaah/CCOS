@@ -73,7 +73,10 @@ function meetingToFormValues(m: MeetingDetailDTO): EditFormValues {
     objectives: m.objectives ?? "",
     scheduledAt: at,
     durationMin: m.durationMin,
-    location: m.location ?? "",
+    location:
+      m.location?.trim() && !/^https?:\/\//i.test(m.location.trim())
+        ? m.location
+        : "",
   };
 }
 
@@ -103,8 +106,6 @@ export function EditMeetingSheet({
   const showCustomType =
     meetingType === MeetingType.STRATEGIC ||
     meetingType === MeetingType.EMERGENCY;
-  const locationVal = form.watch("location") ?? "";
-  const isLinkLocation = /^https?:\/\//i.test(locationVal.trim());
 
   useEffect(() => {
     if (open) {
@@ -344,19 +345,16 @@ export function EditMeetingSheet({
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("location")}</FormLabel>
+                  <FormLabel>{t("venueOptionalLabel")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value ?? ""}
-                      placeholder={t("placeOrLinkPlaceholder")}
+                      placeholder={t("venuePhysicalPlaceholder")}
+                      autoComplete="street-address"
                     />
                   </FormControl>
-                  <p className="text-muted-foreground text-xs">
-                    {isLinkLocation
-                      ? t("locationAsLink")
-                      : t("locationAsVenue")}
-                  </p>
+                  <FormDescription>{t("venueCcosLiveHint")}</FormDescription>
                   <I18nFormMessage />
                 </FormItem>
               )}

@@ -28,6 +28,15 @@ export const editMeetingMetadataSchema = z
         path: ["customMeetingType"],
       });
     }
+
+    const loc = data.location?.trim();
+    if (loc && /^https?:\/\//i.test(loc)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "validationVenueNoUrls",
+        path: ["location"],
+      });
+    }
   });
 
 export type EditMeetingMetadataInput = z.infer<typeof editMeetingMetadataSchema>;

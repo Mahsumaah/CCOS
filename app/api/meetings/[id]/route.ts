@@ -31,6 +31,10 @@ function normalizeMetadata(data: EditMeetingMetadataInput) {
       ? data.customMeetingType?.trim() || null
       : null;
 
+  const loc = data.location?.trim();
+  const location =
+    loc && !/^https?:\/\//i.test(loc) ? loc : null;
+
   return {
     title: data.title.trim(),
     type: data.type,
@@ -38,7 +42,7 @@ function normalizeMetadata(data: EditMeetingMetadataInput) {
     objectives: data.objectives?.trim() || null,
     scheduledAt: data.scheduledAt,
     durationMin: data.durationMin,
-    location: data.location?.trim() || null,
+    location,
   };
 }
 

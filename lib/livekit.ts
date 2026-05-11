@@ -5,9 +5,18 @@ const apiSecret = process.env.LIVEKIT_API_SECRET;
 const httpUrl = process.env.LIVEKIT_HTTP_URL;
 const wsUrl = process.env.LIVEKIT_WS_URL;
 
+/** Names of env vars required for issuing join tokens (no secret values). */
+export function getMissingLiveKitTokenEnv(): string[] {
+  const missing: string[] = [];
+  if (!wsUrl?.trim()) missing.push("LIVEKIT_WS_URL");
+  if (!apiKey?.trim()) missing.push("LIVEKIT_API_KEY");
+  if (!apiSecret?.trim()) missing.push("LIVEKIT_API_SECRET");
+  return missing;
+}
+
 export function getLiveKitWsUrl(): string {
-  if (!wsUrl) throw new Error("LIVEKIT_WS_URL is not configured");
-  return wsUrl;
+  if (!wsUrl?.trim()) throw new Error("LIVEKIT_WS_URL is not configured");
+  return wsUrl.trim();
 }
 
 export function getLiveKitRoomService(): RoomServiceClient {

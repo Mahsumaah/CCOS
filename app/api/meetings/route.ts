@@ -154,7 +154,11 @@ export async function POST(request: Request) {
         schedulingMode: data.schedulingMode,
         scheduledAt: data.scheduledAt,
         durationMin: data.durationMin,
-        location: data.location?.trim() || null,
+        location: (() => {
+          const loc = data.location?.trim();
+          if (!loc || /^https?:\/\//i.test(loc)) return null;
+          return loc;
+        })(),
         createdById: creatorId,
         status: isInstant ? "LIVE" : "SCHEDULED",
         startedAt: isInstant ? now : null,

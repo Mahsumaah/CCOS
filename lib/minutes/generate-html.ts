@@ -83,7 +83,8 @@ export function generateMinutesHtml(
     start: locale === "ar" ? "وقت البدء" : "Start",
     end: locale === "ar" ? "وقت الانتهاء" : "End",
     duration: locale === "ar" ? "المدة" : "Duration",
-    location: locale === "ar" ? "المكان / الرابط" : "Location / link",
+    location: locale === "ar" ? "مكان الاجتماع" : "Venue",
+    ccosLiveVenue: locale === "ar" ? "CCOS مباشر (داخل التطبيق)" : "CCOS Live (in-app)",
     objectives: locale === "ar" ? "الأهداف" : "Objectives",
     attendees: locale === "ar" ? "الحضور" : "Attendees",
     absentees: locale === "ar" ? "الغائبون" : "Absentees",
@@ -109,6 +110,11 @@ export function generateMinutesHtml(
 
   const m = data.meeting;
   const durationText = `${m.durationMin} ${locale === "ar" ? "دقيقة" : "min"}`;
+  const loc = m.location?.trim() ?? "";
+  const locationCell =
+    loc && !/^https?:\/\//i.test(loc)
+      ? esc(loc)
+      : labels.ccosLiveVenue;
 
   const infoRows = [
     [labels.date, formatDateTime(m.scheduledAt, locale)],
@@ -118,7 +124,7 @@ export function generateMinutesHtml(
     ],
     [labels.end, m.endedAt ? formatDateTime(m.endedAt, locale) : labels.none],
     [labels.duration, durationText],
-    [labels.location, m.location?.trim() ? esc(m.location) : labels.none],
+    [labels.location, locationCell],
     [
       labels.objectives,
       m.objectives?.trim() ? esc(m.objectives) : labels.none,

@@ -1,4 +1,10 @@
-const MEETING_DETAIL_TABS = ["agenda", "votes", "decisions", "minutes"] as const;
+const MEETING_DETAIL_TABS = [
+  "agenda",
+  "live",
+  "votes",
+  "decisions",
+  "minutes",
+] as const;
 
 export type MeetingDetailTab = (typeof MEETING_DETAIL_TABS)[number];
 

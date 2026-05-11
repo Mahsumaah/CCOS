@@ -19,6 +19,7 @@ import {
   FilePlus,
   FileText,
   Pencil,
+  Radio,
   Trash2,
   Video,
   Vote,
@@ -73,6 +74,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DashboardBreadcrumbs } from "@/components/layout/dashboard-breadcrumbs";
 import { EditMeetingSheet } from "@/components/meetings/edit-meeting-sheet";
+import { CCOSLiveTab } from "@/components/meetings/CCOSLiveTab";
 import { DecisionsTab } from "@/components/meetings/DecisionsTab";
 import { DelegationsSection } from "@/components/meetings/DelegationsSection";
 import { MinutesTab } from "@/components/meetings/MinutesTab";
@@ -505,6 +507,11 @@ export function MeetingDetailClient({
     [meeting.invitations],
   );
 
+  const isLiveInvitee = useMemo(
+    () => meeting.invitations.some((i) => i.userId === currentUserId),
+    [meeting.invitations, currentUserId],
+  );
+
   const patchMeetingStatus = async (
     status: MeetingStatus,
     options?: { successToast?: boolean; onSuccess?: () => void },
@@ -935,6 +942,10 @@ export function MeetingDetailClient({
       >
         <TabsList className="inline-flex h-auto w-full max-w-full min-w-0 flex-nowrap justify-start gap-1 overflow-x-auto overflow-y-hidden">
           <TabsTrigger value="agenda">{t("tabAgendaInvitees")}</TabsTrigger>
+          <TabsTrigger value="live" className="gap-1.5">
+            <Radio className="size-3.5 shrink-0 opacity-80" aria-hidden />
+            {t("tabCCOSLive")}
+          </TabsTrigger>
           <TabsTrigger value="votes" className="gap-1.5">
             {t("tabVoting")}
             <Badge
@@ -1244,6 +1255,23 @@ export function MeetingDetailClient({
                 role: inv.user.role,
               },
             }))}
+          />
+        </TabsContent>
+
+        <TabsContent value="live" className="space-y-4">
+          <CCOSLiveTab
+            meetingId={meeting.id}
+            meetingStatus={meeting.status}
+            locale={locale}
+            currentUserId={currentUserId}
+            agenda={meeting.agenda.map((a) => ({
+              id: a.id,
+              titleAr: a.titleAr,
+              titleEn: a.titleEn ?? null,
+            }))}
+            canManageMeetings={perms.canManageMeetings}
+            isInvitee={isLiveInvitee}
+            onMeetingUpdated={() => router.refresh()}
           />
         </TabsContent>
 

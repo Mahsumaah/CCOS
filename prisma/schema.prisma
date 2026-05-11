@@ -24,6 +24,14 @@ model Tenant {
 
   users    BoardUser[]
   meetings Meeting[]
+  liveSessions        LiveSession[]
+  liveParticipantSessions LiveParticipantSession[]
+  liveVotes           LiveVote[]
+  liveVoteBallots     LiveVoteBallot[]
+  liveDecisionEvents  LiveDecisionEvent[]
+  meetingArtifacts    MeetingArtifact[]
+  auditLogs           AuditLog[]
+  transcriptSegments  TranscriptSegment[]
 }
 
 enum Plan {
@@ -79,6 +87,18 @@ model BoardUser {
   signatures          MinutesSignature[]
   notifications       BoardNotification[]
   uploadedAttachments MeetingAttachment[]
+  startedLiveSessions LiveSession[]           @relation("LiveSessionStartedBy")
+  endedLiveSessions   LiveSession[]           @relation("LiveSessionEndedBy")
+  liveParticipantSessions LiveParticipantSession[]
+  startedLiveVotes    LiveVote[]              @relation("LiveVoteOpenedBy")
+  closedLiveVotes     LiveVote[]              @relation("LiveVoteClosedBy")
+  liveVoteBallots     LiveVoteBallot[]
+  recordedLiveDecisions LiveDecisionEvent[]   @relation("LiveDecisionRecordedBy")
+  proposedLiveDecisions LiveDecisionEvent[]   @relation("LiveDecisionProposedBy")
+  updatedLiveDecisions  LiveDecisionEvent[]   @relation("LiveDecisionUpdatedBy")
+  ownedLiveDecisions    LiveDecisionEvent[]   @relation("LiveDecisionOwnedBy")
+  meetingArtifacts    MeetingArtifact[]       @relation("ArtifactCreatedBy")
+  auditLogs           AuditLog[]              @relation("AuditActor")
 
   @@unique([tenantId, email])
 }
@@ -129,6 +149,302 @@ model Meeting {
   decisions       Decision[]
   minutes         Minutes?
   notifications   BoardNotification[]
+  liveSessions           LiveSession[]
+  liveParticipantSessions LiveParticipantSession[]
+  liveVotes              LiveVote[]
+  liveVoteBallots        LiveVoteBallot[]
+  liveDecisionEvents     LiveDecisionEvent[]
+  artifacts              MeetingArtifact[]
+  auditLogs              AuditLog[]
+  transcriptSegments     TranscriptSegment[]
+}
+
+enum LiveSessionStatus {
+  IDLE
+  LIVE
+  ENDED
+}
+
+enum LiveRecordingStatus {
+  NOT_STARTED
+  RECORDING
+  COMPLETED
+  FAILED
+}
+
+enum MeetingLiveRole {
+  CHAIR
+  VICE_CHAIR
+  SECRETARY
+  DECISION_RECORDER
+  VOTING_MEMBER
+  NON_VOTING_MEMBER
+  OBSERVER
+  GUEST
+  SYSTEM_ADMIN
+}
+
+enum LiveVoteVisibility {
+  PUBLIC
+  SECRET
+}
+
+enum LiveVoteRule {
+  MAJORITY
+  QUORUM_GATED
+  ROLE_WEIGHTED
+}
+
+enum LiveVoteChoice {
+  YES
+  NO
+  ABSTAIN
+}
+
+enum LiveDecisionStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+  IN_REVIEW
+}
+
+enum ArtifactType {
+  RECORDING
+  TRANSCRIPT
+  AI_MINUTES_DRAFT
+  FINAL_MINUTES
+  SIGNED_MINUTES
+}
+
+enum AuditAction {
+  LIVE_SESSION_OPENED
+  LIVE_SESSION_CLOSED
+  PARTICIPANT_JOINED
+  PARTICIPANT_LEFT
+  PARTICIPANT_REJOINED
+  PARTICIPANT_RAISED_HAND
+  PARTICIPANT_MUTED
+  PARTICIPANT_REMOVED
+  SCREEN_SHARE_STARTED
+  SCREEN_SHARE_STOPPED
+  LIVE_VOTE_OPENED
+  LIVE_VOTE_CAST
+  LIVE_VOTE_CLOSED
+  LIVE_DECISION_CREATED
+  LIVE_DECISION_UPDATED
+  LIVE_DECISION_APPROVED
+  ARTIFACT_CREATED
+  MINUTES_SIGNED
+}
+
+model LiveSession {
+  id            String              @id @default(cuid())
+  tenantId      String
+  tenant        Tenant              @relation(fields: [tenantId], references: [id])
+  meetingId     String
+  meeting       Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  roomName      String
+  status        LiveSessionStatus   @default(IDLE)
+  startedAt     DateTime?
+  endedAt       DateTime?
+  startedById   String?
+  startedBy     BoardUser?          @relation("LiveSessionStartedBy", fields: [startedById], references: [id])
+  endedById     String?
+  endedBy       BoardUser?          @relation("LiveSessionEndedBy", fields: [endedById], references: [id])
+  recordingStatus LiveRecordingStatus @default(NOT_STARTED)
+  recordingUrl  String?
+  recordingError String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  participants       LiveParticipantSession[]
+  liveVotes          LiveVote[]
+  liveDecisionEvents LiveDecisionEvent[]
+  artifacts          MeetingArtifact[]
+  auditLogs          AuditLog[]
+  transcriptSegments TranscriptSegment[]
+
+  @@unique([meetingId, roomName])
+  @@index([tenantId, meetingId, createdAt])
+}
+
+model LiveParticipantSession {
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+  meetingId       String
+  meeting         Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  liveSessionId   String
+  liveSession     LiveSession  @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  userId          String
+  user            BoardUser    @relation(fields: [userId], references: [id])
+  participantSid  String?
+  role            MeetingLiveRole
+  joinedAt        DateTime     @default(now())
+  leftAt          DateTime?
+  reconnectCount  Int          @default(0)
+  raisedHandAt    DateTime?
+  mutedByChairAt  DateTime?
+  removedAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([tenantId, meetingId, joinedAt])
+  @@index([liveSessionId, joinedAt])
+}
+
+model LiveVote {
+  id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  meetingId     String
+  meeting       Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  liveSessionId String?
+  liveSession   LiveSession?       @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  agendaItemId  String?
+  agendaItem    MeetingAgendaItem? @relation(fields: [agendaItemId], references: [id])
+  title         String
+  question      String
+  visibility    LiveVoteVisibility @default(PUBLIC)
+  rule          LiveVoteRule       @default(MAJORITY)
+  quorumRequired Boolean           @default(false)
+  allowedRoles  Json?
+  isOpen        Boolean            @default(true)
+  openedAt      DateTime           @default(now())
+  closedAt      DateTime?
+  openedById    String
+  openedBy      BoardUser          @relation("LiveVoteOpenedBy", fields: [openedById], references: [id])
+  closedById    String?
+  closedBy      BoardUser?         @relation("LiveVoteClosedBy", fields: [closedById], references: [id])
+  resultJson    Json?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  ballots       LiveVoteBallot[]
+  auditLogs     AuditLog[]
+
+  @@index([tenantId, meetingId, openedAt])
+  @@index([liveSessionId, openedAt])
+}
+
+model LiveVoteBallot {
+  id            String         @id @default(cuid())
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  meetingId     String
+  meeting       Meeting        @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  liveVoteId    String
+  liveVote      LiveVote       @relation(fields: [liveVoteId], references: [id], onDelete: Cascade)
+  userId        String
+  user          BoardUser      @relation(fields: [userId], references: [id])
+  choice        LiveVoteChoice
+  isDelegated   Boolean        @default(false)
+  castAt        DateTime       @default(now())
+  metadataJson  Json?
+
+  @@unique([liveVoteId, userId])
+  @@index([tenantId, meetingId, castAt])
+}
+
+model LiveDecisionEvent {
+  id              String             @id @default(cuid())
+  tenantId        String
+  tenant          Tenant             @relation(fields: [tenantId], references: [id])
+  meetingId       String
+  meeting         Meeting            @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  liveSessionId   String?
+  liveSession     LiveSession?       @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  agendaItemId    String?
+  agendaItem      MeetingAgendaItem? @relation(fields: [agendaItemId], references: [id])
+  decisionText    String
+  status          LiveDecisionStatus @default(DRAFT)
+  proposedById    String?
+  proposedBy      BoardUser?         @relation("LiveDecisionProposedBy", fields: [proposedById], references: [id])
+  recordedById    String
+  recordedBy      BoardUser          @relation("LiveDecisionRecordedBy", fields: [recordedById], references: [id])
+  ownerId         String?
+  owner           BoardUser?         @relation("LiveDecisionOwnedBy", fields: [ownerId], references: [id])
+  dueDate         DateTime?
+  notes           String?
+  requiresVote    Boolean            @default(false)
+  approved        Boolean            @default(false)
+  approvedAt      DateTime?
+  updatedById     String?
+  updatedBy       BoardUser?         @relation("LiveDecisionUpdatedBy", fields: [updatedById], references: [id])
+  eventAt         DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  auditLogs       AuditLog[]
+
+  @@index([tenantId, meetingId, eventAt])
+  @@index([liveSessionId, eventAt])
+}
+
+model MeetingArtifact {
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+  meetingId       String
+  meeting         Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  liveSessionId   String?
+  liveSession     LiveSession? @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  type            ArtifactType
+  url             String
+  name            String
+  mime            String?
+  size            Int?
+  source          String?
+  createdById     String?
+  createdBy       BoardUser?   @relation("ArtifactCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime     @default(now())
+
+  @@index([tenantId, meetingId, createdAt])
+}
+
+model TranscriptSegment {
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+  meetingId       String
+  meeting         Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  liveSessionId   String?
+  liveSession     LiveSession? @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  speakerName     String?
+  speakerUserId   String?
+  language        String?
+  text            String
+  startedAtMs     Int?
+  endedAtMs       Int?
+  confidence      Float?
+  metadataJson    Json?
+  createdAt       DateTime     @default(now())
+
+  @@index([tenantId, meetingId, createdAt])
+}
+
+model AuditLog {
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+  meetingId       String?
+  meeting         Meeting?     @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  liveSessionId   String?
+  liveSession     LiveSession? @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  liveVoteId      String?
+  liveVote        LiveVote?    @relation(fields: [liveVoteId], references: [id], onDelete: SetNull)
+  liveDecisionEventId String?
+  liveDecisionEvent LiveDecisionEvent? @relation(fields: [liveDecisionEventId], references: [id], onDelete: SetNull)
+  actorId         String?
+  actor           BoardUser?   @relation("AuditActor", fields: [actorId], references: [id])
+  action          AuditAction
+  targetType      String
+  targetId        String?
+  payloadJson     Json?
+  createdAt       DateTime     @default(now())
+
+  @@index([tenantId, meetingId, createdAt])
+  @@index([tenantId, action, createdAt])
 }
 
 enum MeetingType {
@@ -168,6 +484,8 @@ model MeetingAgendaItem {
   attachments MeetingAttachment[]
   votes       Vote[]
   decisions   Decision[]
+  liveVotes   LiveVote[]
+  liveDecisionEvents LiveDecisionEvent[]
 }
 
 // ============ ATTACHMENT ============

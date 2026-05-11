@@ -1,0 +1,16 @@
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: true
+keys:
+  ${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}
+room:
+  auto_create: true
+webhook:
+  api_key: ${LIVEKIT_WEBHOOK_KEY}
+  urls:
+    - ${LIVEKIT_WEBHOOK_URL}

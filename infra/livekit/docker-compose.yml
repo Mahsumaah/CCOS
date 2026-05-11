@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit/livekit.yaml
+    ports:
+      - "7880:7880" # HTTP/WebSocket
+      - "7881:7881" # TCP fallback
+      - "50000-50100:50000-50100/udp" # WebRTC RTP
+    volumes:
+      - ./livekit.yaml:/etc/livekit/livekit.yaml:ro
+    restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn:4.6
+    network_mode: host
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    restart: unless-stopped
+
+  egress:
+    image: livekit/egress:latest
+    environment:
+      EGRESS_CONFIG_FILE: /etc/livekit/egress.yaml
+    volumes:
+      - ./egress.yaml:/etc/livekit/egress.yaml:ro
+    restart: unless-stopped

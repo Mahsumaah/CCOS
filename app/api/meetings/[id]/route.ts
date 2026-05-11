@@ -1,4 +1,4 @@
-import { MeetingType } from "@prisma/client";
+import { LiveSessionStatus, MeetingType } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import {
@@ -106,6 +106,29 @@ export async function PATCH(request: Request, context: RouteContext) {
         data,
         include: meetingDetailInclude,
       });
+
+      if (nextStatus === "ENDED") {
+        const nowEnded = new Date();
+        await prisma.$transaction(async (tx) => {
+          const active = await tx.liveSession.findFirst({
+            where: { meetingId: id, status: LiveSessionStatus.LIVE },
+            orderBy: { createdAt: "desc" },
+          });
+          if (!active) return;
+          await tx.liveParticipantSession.updateMany({
+            where: { liveSessionId: active.id, leftAt: null },
+            data: { leftAt: nowEnded },
+          });
+          await tx.liveSession.update({
+            where: { id: active.id },
+            data: {
+              status: LiveSessionStatus.ENDED,
+              endedAt: nowEnded,
+              endedById: session.user.id,
+            },
+          });
+        });
+      }
 
       const inviteeIds = await getMeetingInviteeUserIds(id);
       if (inviteeIds.length) {

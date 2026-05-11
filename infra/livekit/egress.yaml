@@ -1,0 +1,13 @@
+api_key: ${LIVEKIT_API_KEY}
+api_secret: ${LIVEKIT_API_SECRET}
+ws_url: ${LIVEKIT_WS_URL}
+redis:
+  address: ${LIVEKIT_REDIS_URL}
+s3:
+  access_key: ${LIVEKIT_S3_ACCESS_KEY}
+  secret: ${LIVEKIT_S3_SECRET}
+  endpoint: ${LIVEKIT_S3_ENDPOINT}
+  region: ${LIVEKIT_S3_REGION}
+  bucket: ${LIVEKIT_S3_BUCKET}
+  force_path_style: true
+template_base: /home/egress/template-default
